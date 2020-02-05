@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.probir.workmanagerexample">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -20,7 +21,17 @@
             </intent-filter>
         </activity>
 
-        <service android:enabled="true" android:name=".MyService"/>
+        <service
+            android:name=".MyService"
+            android:enabled="true" />
+
+        <service
+            android:name=".MyJobScheduler"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+<!--        <provider-->
+<!--            android:name="com.probir.workmanagerexample.MyWorker"-->
+<!--            android:authorities="${applicationId}.workmanager-init" />-->
     </application>
 
 

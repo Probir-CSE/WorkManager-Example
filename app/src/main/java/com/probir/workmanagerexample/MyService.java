@@ -1,7 +1,12 @@
 package com.probir.workmanagerexample;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -9,6 +14,7 @@ import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +29,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Probir Bhowmik on 04-Feb-20. Soft BD Ltd. Email:probirbhowmikcse@gmail.com
  */
 public class MyService extends Service {
+    public static final String CHANNEL_ID = "ForegroundServiceChannel";
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -31,16 +39,44 @@ public class MyService extends Service {
 
     @Override
     public void onCreate() {
-        rpt();
+//        super.onCreate();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+//        String input = intent.getStringExtra("inputExtra");
+        createNotificationChannel();
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Foreground Service")
+                .setContentText("text")
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(0, notification);
         rpt();
+        //do heavy work on a background thread
+        //stopSelf();
         return START_STICKY;
     }
 
-    public void getAndSaveDateAndTime() {
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Foreground Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
+
+
+    }
+
+    private void getAndSaveDateAndTime() {
         try {
             File file = new File(Environment.getExternalStorageDirectory(), "/DateTime/");
             if (!file.exists()) {
@@ -67,7 +103,7 @@ public class MyService extends Service {
             File myFileName = new File(file, "sample.txt");
             FileWriter fileWriter = new FileWriter(myFileName);
             Date currentTime = Calendar.getInstance().getTime();
-            fileWriter.write(result + "\n" + currentTime.toString());
+            fileWriter.write(result + "\n" + currentTime.toString() + " From Service");
             fileWriter.flush();
             fileWriter.close();
 
@@ -75,7 +111,7 @@ public class MyService extends Service {
         }
     }
 
-    public void rpt(){
+    private void rpt() {
 
         final Handler h;
 
@@ -90,11 +126,13 @@ public class MyService extends Service {
                                 getAndSaveDateAndTime();
                             }
                         });
-                        TimeUnit.SECONDS.sleep(5);
+                        TimeUnit.MINUTES.sleep(5);
                     } catch (Exception ex) {
                     }
                 }
             }
         }).start();
     }
+
+
 }
